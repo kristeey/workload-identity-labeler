@@ -1,0 +1,64 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: workload-identity-labeler
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: workload-identity-labeler
+  namespace: workload-identity-labeler
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: workload-identity-labeler
+rules:
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list", "watch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: workload-identity-labeler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: workload-identity-labeler
+subjects:
+  - kind: ServiceAccount
+    name: workload-identity-labeler
+    namespace: workload-identity-labeler
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workload-identity-labeler
+  namespace: workload-identity-labeler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workload-identity-labeler
+  template:
+    metadata:
+      labels:
+        app: workload-identity-labeler
+    spec:
+      serviceAccountName: workload-identity-labeler
+      containers:
+        - name: workload-identity-labeler
+          image: workload-identity-labeler:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: AZURE_SUBSCRIPTION_ID
+              value: "INSERT HERE"
+            - name: AZURE_TENANT_ID
+              value: "INSERT HERE"
+            - name: AZURE_CLIENT_ID
+              value: "INSERT HERE"
+            - name: AZURE_CLIENT_SECRET
+              value: "INSERT HERE"
+            - name: LOG_LEVEL
+              value: "info"

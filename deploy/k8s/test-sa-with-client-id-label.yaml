@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa-with-client-id-label
+  namespace: workload-identity-labeler
+  labels:
+    workload.identity.labeler/azure-mi-client-name: "INSERT HERE"
+    azure.workload.identity/client-id: "some-client-id-value"

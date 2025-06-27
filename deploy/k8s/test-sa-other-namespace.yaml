@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-sa-other-namespace
+  namespace: default
+  labels:
+    workload.identity.labeler/azure-mi-client-name: "INSERT HERE"

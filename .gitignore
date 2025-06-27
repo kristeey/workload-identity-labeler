@@ -1,0 +1,37 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go build
+**/build/
+**/bin/
+
+# Output of coverage tool
+*.coverprofile
+
+# Dependency directories (remove the comment below if you use Go modules)
+/vendor/
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+
+# Logs
+*.log
+
+# Certificates and secrets
+*.crt
+*.key
+*.pem
+*.b64
+
+# Misc
+**tmp**

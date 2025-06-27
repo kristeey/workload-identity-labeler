@@ -1,0 +1,35 @@
+# Workload Identity Labeler Controller
+
+This project is a Kubernetes controller written in Go. It periodically scans all ServiceAccounts in the cluster. If a ServiceAccount has the label `workload.identity.labeler/azure-mi-client-name` and does not have the label `azure.workload.identity/client-id`, the controller fetches the Azure Managed Identity client ID (using the Azure SDK and DefaultAzureCredential, with subscription and tenant from environment variables) and adds it as a label.
+
+## How it works
+- Scans all ServiceAccounts every scan interval.
+- If a ServiceAccount has the MI label and is missing the client-id label, it fetches the client ID from Azure and updates the ServiceAccount.
+- Does nothing if the ServiceAccount is missing the MI label or already has the client-id label.
+
+## Configuration
+Set the following environment variables for Azure authentication:
+- `AZURE_TENANT_ID`
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+Other available environment variables is:
+- `AZURE_SUBSCRIPTION_ID`: Azure subscription to scan for MIs.
+- `LOG_LEVEL`: Log level, either of `debug`, `info`, `warn` or `error`. Defaults to `info`.
+- `INTERVAL`: Scan interval. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". Defaults to `60s`
+
+## Docker
+```bash
+docker build -t workload-identity-labeler:latest .
+```
+
+## Kubernetes Deployment
+- Edit `deploy/k8s/deployment.yaml` to set your image and Azure credentials.
+- Apply the manifest:
+  ```bash
+  kubectl apply -f deploy/k8s/deployment.yaml
+  ```
+- Edit service account label to contain a valid MI name.
+- Apply Service account and verify that the WI label is added. Check the logs of the controller pod to debug.
+
+---
+This project uses the Azure SDK for Go and Kubernetes client-go.
