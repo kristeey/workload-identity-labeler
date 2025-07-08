@@ -111,28 +111,30 @@ func labelServiceAccounts(sas *v1.ServiceAccountList, msiClient *armmsi.UserAssi
 			logger.Debug("ServiceAccount has no labels", "namespace", sa.Namespace, "name", sa.Name)
 			continue
 		}
+		annotations := sa.Annotations
+		if annotations == nil {
+			annotations = map[string]string{}
+		}
 		// Check if the ServiceAccount has the workload.identity.labeler label
 		miName, hasMILabel := labels["workload.identity.labeler/azure-mi-client-name"]
-		_, hasClientIDLabel := labels["azure.workload.identity/client-id"]
-		if hasMILabel && !hasClientIDLabel && miName != "" {
+		_, hasClientIDAnnotation := annotations["azure.workload.identity/client-id"]
+		if hasMILabel && !hasClientIDAnnotation && miName != "" {
 			logger.Info("Found ServiceAccount with workload.identity.labeler label", "namespace", sa.Namespace, "name", sa.Name, "miName", miName)
 			clientID, err := findAzureClientID(msiClient, miName)
 			if err != nil {
 				logger.Warn("failed to get client id", "miName", miName, "err", err)
 				continue
 			}
-			if sa.Labels == nil {
-				sa.Labels = map[string]string{}
-			}
-			sa.Labels["azure.workload.identity/client-id"] = clientID
+			annotations["azure.workload.identity/client-id"] = clientID
+			sa.Annotations = annotations
 			_, err = clientset.CoreV1().ServiceAccounts(sa.Namespace).Update(context.Background(), &sa, metav1.UpdateOptions{})
 			if err != nil {
 				logger.Warn("failed to update ServiceAccount", "namespace", sa.Namespace, "name", sa.Name, "err", err)
 			} else {
-				logger.Info("Updated ServiceAccount with azure.workload.identity/client-id label", "namespace", sa.Namespace, "name", sa.Name)
+				logger.Info("Updated ServiceAccount with client-id annotation", "namespace", sa.Namespace, "name", sa.Name)
 			}
-		} else if hasClientIDLabel {
-			logger.Debug("ServiceAccount already has azure.workload.identity/client-id label", "namespace", sa.Namespace, "name", sa.Name)
+		} else if hasClientIDAnnotation {
+			logger.Debug("ServiceAccount already has azure.workload.identity/client-id annotation", "namespace", sa.Namespace, "name", sa.Name)
 			continue
 		}
 	}

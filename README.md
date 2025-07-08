@@ -9,13 +9,36 @@ This project is a Kubernetes controller written in Go. It periodically scans all
 
 ## Configuration
 Set the following environment variables for Azure authentication:
-- `AZURE_TENANT_ID`
-- `AZURE_CLIENT_ID`
-- `AZURE_CLIENT_SECRET`
-Other available environment variables is:
+REQUIRED
+- `AZURE_TENANT_ID`: Azure tenant id
+- `AZURE_CLIENT_ID`: Azure client used to authenticate against Azure.
 - `AZURE_SUBSCRIPTION_ID`: Azure subscription to scan for MIs.
+OPTIONAL
+- `AZURE_CLIENT_SECRET`: Client secret Azure client specified with `AZURE_CLIENT_ID`. Not recomended for production, see section for workload identity.
 - `LOG_LEVEL`: Log level, either of `debug`, `info`, `warn` or `error`. Defaults to `info`.
-- `INTERVAL`: Scan interval. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". Defaults to `60s`
+- `INTERVAL`: Scan interval. Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". Defaults to `60s`.
+
+## Authentication
+
+### Workload Identity (recommended for production)
+
+This controller is designed to work seamlessly with Azure Workload Identity for Kubernetes. Workload Identity allows Kubernetes workloads to access Azure resources securely without managing secrets. When using Workload Identity, ensure your ServiceAccounts are annotated and labeled according to the [Azure Workload Identity documentation](https://azure.github.io/azure-workload-identity/docs/).
+
+To utilize Azure workload identity as authentication method for the **Workload-identity-labeler Controller** do the following:
+1. Add `azure.workload.identity/use: "true"` pod annotation.
+2. Add `azure.workload.identity/client-id: "<client-id>"` kubernetes service account label.
+3. Populate `Azure_CLIENT_ID` env var.
+
+### Azure client secret (not recommended for production)
+You can let **Workload-identity-labeler Controller** authenticate against Azure using Client secrets belonging to the Azure Client you want to use. Simply specify the `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET` environment variables.
+
+
+**Key points:**
+- The controller expects your Kubernetes ServiceAccounts to have the label `workload.identity.labeler/azure-mi-client-name` with the value set to the Azure Managed Identity name.
+- The controller will automatically add the `azure.workload.identity/client-id` label if it is missing.
+- For production, prefer Workload Identity over client secrets for improved security and manageability.
+
+For more details, see the [Azure Workload Identity documentation](https://azure.github.io/azure-workload-identity/docs/).
 
 ## Docker
 ```bash
