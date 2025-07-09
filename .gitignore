@@ -36,4 +36,4 @@
 # Misc
 **tmp**
 
-/deploy/helm/*
+/deploy/charts/*
