@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment
+  namespace: workload-identity-labeler
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: test-sa
+      containers:
+      - name: nginx
+        image: nginx

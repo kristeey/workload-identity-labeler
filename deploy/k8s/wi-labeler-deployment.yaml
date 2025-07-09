@@ -17,6 +17,9 @@ rules:
   - apiGroups: [""]
     resources: ["serviceaccounts"]
     verbs: ["get", "list", "watch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "update", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -53,12 +56,25 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: AZURE_SUBSCRIPTION_ID
-              value: "INSERT HERE"
+              value: "<INSERT HERE>"
             - name: AZURE_TENANT_ID
-              value: "INSERT HERE"
+              value: "<INSERT HERE>"
             - name: AZURE_CLIENT_ID
-              value: "INSERT HERE"
+              value: "<INSERT HERE>"
             - name: AZURE_CLIENT_SECRET
-              value: "INSERT HERE"
+              value: <INSERT HERE>
             - name: LOG_LEVEL
               value: "info"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: workload-identity-labeler
+  namespace: workload-identity-labeler
+spec:
+  selector:
+    app: workload-identity-labeler
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

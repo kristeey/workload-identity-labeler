@@ -38,7 +38,7 @@ func main() {
 	// Setup clients
 	clientset, msiClient, interval, err := setup()
 	if err != nil {
-		logger.Error("failed to setup clients", "err", err)
+		logger.Error("Failed to setup clients", "err", err)
 		return
 	}
 
@@ -48,40 +48,38 @@ func main() {
 		sas, err := clientset.CoreV1().ServiceAccounts("").List(context.Background(), metav1.ListOptions{})
 		if err == nil {
 			for _, sa := range sas.Items {
-				logger.Debug("Found ServiceAccount", "namespace", sa.Namespace, "name", sa.Name)
+				logger.Debug("Found ServiceAccount", "name", sa.Name, "namespace", sa.Namespace)
 			}
 		} else {
-			logger.Error("failed to list service accounts", "err", err)
+			logger.Error("Failed to list service accounts", "err", err)
 			return
 		}
 		// Check for WI label and Label ServiceAccounts with the Azure Managed Identity client ID
 		changedSAs, err := labelServiceAccounts(sas, msiClient, clientset)
 		if err != nil {
-			logger.Error("error running labelServiceAccounts", "err", err)
+			logger.Error("Error running labelServiceAccounts", "err", err)
 		}
-		// search for deployments using the changed ServiceAccounts
+		// Search for deployments using the changed ServiceAccounts
+		// If any deployments are found, rollout restart them
 		if len(changedSAs) > 0 {
-			logger.Info("Found ServiceAccounts with workload.identity.labeler label, checking for deployments using them", "changedServiceAccounts", changedSAs)
-			deployments, err := searchDeploymentsForSAs(clientset, changedSAs)
+			logger.Info("Changed ServiceAccounts", "ServiceAccounts", changedSAs)
+			depObj, err := searchDeploymentsForSAs(clientset, changedSAs)
 			if err != nil {
-				logger.Error("failed to search deployments for ServiceAccounts", "err", err)
+				logger.Error("Failed to search deployments for ServiceAccounts", "err", err)
 			}
-			if len(deployments) > 0 {
-				logger.Info("Found deployments using ServiceAccounts with workload.identity.labeler label", "deployments", len(deployments))
-				for _, dep := range deployments {
-					logger.Info("Deployment using ServiceAccount with workload.identity.labeler label", "namespace", dep.Namespace, "name", dep.Name, "serviceAccountName", dep.Spec.Template.Spec.ServiceAccountName)
-					// Rollout restart the deployment
-					err := rolloutRestartDeployment(clientset, dep.Namespace, dep.Name)
-					if err != nil {
-						logger.Error("failed to rollout restart deployment", "namespace", dep.Namespace, "name", dep.Name, "err", err)
-					} else {
-						logger.Info("Rolled out restart for deployment", "namespace", dep.Namespace, "name", dep.Name)
-					}
+			if len(depObj) > 0 {
+				restartedDeps, err := rolloutRestartDeployments(clientset, depObj)
+				if err != nil {
+					logger.Error("Failed to restart deployments", "err", err)
+				}
+				if len(restartedDeps) > 0 {
+					logger.Info("Restarted Deployments", "deployments", restartedDeps)
+				} else {
+					logger.Info("No deployments were restarted")
 				}
 			} else {
 				logger.Info("No deployments found using ServiceAccounts with workload.identity.labeler label")
 			}
-
 		}
 		time.Sleep(interval)
 	}
@@ -93,23 +91,23 @@ func setup() (*kubernetes.Clientset, *armmsi.UserAssignedIdentitiesClient, time.
 
 	cfg, err := rest.InClusterConfig()
 	if err != nil {
-		logger.Error("failed to get in-cluster config", "err", err)
+		logger.Error("Failed to get in-cluster config", "err", err)
 		return nil, nil, interval, err
 	}
 	clientset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
-		logger.Error("failed to create k8s client", "err", err)
+		logger.Error("Failed to create k8s client", "err", err)
 		return nil, nil, interval, err
 	}
 	subID := os.Getenv("AZURE_SUBSCRIPTION_ID")
 	cred, err := azidentity.NewDefaultAzureCredential(nil)
 	if err != nil {
-		logger.Error("failed to get Azure credential", "err", err)
+		logger.Error("Failed to get Azure credential", "err", err)
 		return nil, nil, interval, err
 	}
 	msiClient, err := armmsi.NewUserAssignedIdentitiesClient(subID, cred, nil)
 	if err != nil {
-		logger.Error("failed to create Azure MSI client", "err", err)
+		logger.Error("Failed to create Azure MSI client", "err", err)
 		return nil, nil, interval, err
 	}
 
@@ -130,12 +128,12 @@ func getScanInterval() time.Duration {
 }
 
 func labelServiceAccounts(sas *v1.ServiceAccountList, msiClient *armmsi.UserAssignedIdentitiesClient, clientset *kubernetes.Clientset) ([]string, error) {
-	logger.Info("Scanning ServiceAccounts for Azure workload.identity.labeler label...")
+	logger.Info("Scanning for ServiceAccounts...")
 	var changedSAs []string
 	for _, sa := range sas.Items {
 		labels := sa.Labels
 		if labels == nil {
-			logger.Debug("ServiceAccount has no labels", "namespace", sa.Namespace, "name", sa.Name)
+			logger.Debug("ServiceAccount has no labels", "name", sa.Name, "namespace", sa.Namespace)
 			continue
 		}
 		annotations := sa.Annotations
@@ -146,23 +144,23 @@ func labelServiceAccounts(sas *v1.ServiceAccountList, msiClient *armmsi.UserAssi
 		miName, hasMILabel := labels["workload.identity.labeler/azure-mi-client-name"]
 		_, hasClientIDAnnotation := annotations["azure.workload.identity/client-id"]
 		if hasMILabel && !hasClientIDAnnotation && miName != "" {
-			logger.Info("Found ServiceAccount with workload.identity.labeler label", "namespace", sa.Namespace, "name", sa.Name, "miName", miName)
+			logger.Debug("Found ServiceAccount", "name", sa.Name, "namespace", sa.Namespace, "miName", miName)
 			clientID, err := findAzureClientID(msiClient, miName)
 			if err != nil {
-				logger.Warn("failed to get client id", "miName", miName, "err", err)
+				logger.Warn("Failed to get client id", "miName", miName, "err", err)
 				continue
 			}
 			annotations["azure.workload.identity/client-id"] = clientID
 			sa.Annotations = annotations
 			_, err = clientset.CoreV1().ServiceAccounts(sa.Namespace).Update(context.Background(), &sa, metav1.UpdateOptions{})
 			if err != nil {
-				logger.Warn("failed to update ServiceAccount", "namespace", sa.Namespace, "name", sa.Name, "err", err)
+				logger.Warn("Failed to update ServiceAccount", "name", sa.Name, "namespace", sa.Namespace, "err", err)
 			} else {
-				logger.Info("Updated ServiceAccount with client-id annotation", "namespace", sa.Namespace, "name", sa.Name)
+				logger.Debug("Updated ServiceAccount with client-id annotation", "name", sa.Name, "namespace", sa.Namespace)
 				changedSAs = append(changedSAs, sa.Name)
 			}
 		} else if hasClientIDAnnotation {
-			logger.Debug("ServiceAccount already has azure.workload.identity/client-id annotation", "namespace", sa.Namespace, "name", sa.Name)
+			logger.Debug("ServiceAccount already has azure.workload.identity/client-id annotation", "name", sa.Name, "namespace", sa.Namespace)
 			continue
 		}
 	}
@@ -174,7 +172,7 @@ func findAzureClientID(msiClient *armmsi.UserAssignedIdentitiesClient, miName st
 	for pager.More() {
 		resp, err := pager.NextPage(context.Background())
 		if err != nil {
-			logger.Error("failed to page managed identities", "err", err)
+			logger.Error("Failed to page managed identities", "err", err)
 			return "", err
 		}
 		for _, id := range resp.Value {
@@ -183,12 +181,11 @@ func findAzureClientID(msiClient *armmsi.UserAssignedIdentitiesClient, miName st
 			}
 		}
 	}
-	logger.Error("managed identity not found", "miName", miName)
+	logger.Error("Managed identity not found. Check if the authenticated identity (azure client) has reader access on correct scope.", "miName", miName)
 	return "", os.ErrNotExist
 }
 
-func searchDeploymentsForSAs(clientset *kubernetes.Clientset, saRefs []string) ([]appsv1.Deployment, error) {
-	var found []appsv1.Deployment
+func searchDeploymentsForSAs(clientset *kubernetes.Clientset, saRefs []string) (foundDeps []appsv1.Deployment, err error) {
 	deployments, err := clientset.AppsV1().Deployments("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -197,24 +194,35 @@ func searchDeploymentsForSAs(clientset *kubernetes.Clientset, saRefs []string) (
 		saName := dep.Spec.Template.Spec.ServiceAccountName
 		for _, ref := range saRefs {
 			if saName == ref {
-				found = append(found, dep)
+				foundDeps = append(foundDeps, dep)
 				break
 			}
 		}
 	}
-	return found, nil
+	return foundDeps, nil
 }
 
-func rolloutRestartDeployment(clientset *kubernetes.Clientset, namespace, deploymentName string) error {
-	depClient := clientset.AppsV1().Deployments(namespace)
-	dep, err := depClient.Get(context.Background(), deploymentName, metav1.GetOptions{})
-	if err != nil {
-		return err
+func rolloutRestartDeployments(clientset *kubernetes.Clientset, deployments []appsv1.Deployment) (restartedDeps []string, err error) {
+	for _, dep := range deployments {
+		depClient := clientset.AppsV1().Deployments(dep.Namespace)
+		// Get the latest version in case of resourceVersion conflicts
+		freshDep, err := depClient.Get(context.Background(), dep.Name, metav1.GetOptions{})
+		if err != nil {
+			logger.Error("Failed to get deployment", "name", dep.Name, "namespace", dep.Namespace, "err", err)
+			continue
+		}
+		if freshDep.Spec.Template.Annotations == nil {
+			freshDep.Spec.Template.Annotations = map[string]string{}
+		}
+		freshDep.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+		_, err = depClient.Update(context.Background(), freshDep, metav1.UpdateOptions{})
+		if err != nil {
+			logger.Error("Failed to update deployment", "name", dep.Name, "namespace", dep.Namespace, "err", err)
+			continue
+		} else {
+			logger.Debug("Restarted deployment", "name", dep.Name, "namespace", dep.Namespace)
+			restartedDeps = append(restartedDeps, dep.Name)
+		}
 	}
-	if dep.Spec.Template.Annotations == nil {
-		dep.Spec.Template.Annotations = map[string]string{}
-	}
-	dep.Spec.Template.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
-	_, err = depClient.Update(context.Background(), dep, metav1.UpdateOptions{})
-	return err
+	return restartedDeps, nil
 }

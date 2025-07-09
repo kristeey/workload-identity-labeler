@@ -4,4 +4,4 @@ metadata:
   name: test-sa-other-namespace
   namespace: default
   labels:
-    workload.identity.labeler/azure-mi-client-name: "INSERT HERE"
+    workload.identity.labeler/azure-mi-client-name: "some-client-name"

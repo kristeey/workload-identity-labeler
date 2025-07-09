@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-deployment-other-namespace
+  namespace: default
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: test-sa-other-namespace
+      containers:
+      - name: nginx
+        image: nginx

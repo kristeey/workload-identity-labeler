@@ -4,8 +4,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY main.go ./
-# Add this line to force Linux/amd64 build (or change to arm64 if needed)
-RUN GOOS=linux GOARCH=amd64 go build -o workload-identity-labeler main.go
+RUN go build -o workload-identity-labeler main.go
 
 FROM alpine:3.19
 WORKDIR /app

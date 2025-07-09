@@ -43,15 +43,30 @@ For more details, see the [Azure Workload Identity documentation](https://azure.
 ```bash
 docker build -t workload-identity-labeler:latest .
 ```
+For cross-plattform build use `docker buildx`. For instance, build for amd64 linux architecture:
+```bash
+docker buildx build --platform linux/amd64 -t workload-identity-labeler:latest .
+```
+## Installation
+### Helm
+TBA
 
-## Kubernetes Deployment
-- Edit `deploy/k8s/deployment.yaml` to set your image and Azure credentials.
-- Apply the manifest:
+## Example
+1. Edit `deploy/k8s/deployment.yaml` to set your image and Azure credentials.
+2. Apply the **Workload-identity-labeler**:
   ```bash
-  kubectl apply -f deploy/k8s/deployment.yaml
+  kubectl apply -f deploy/k8s/wi-labeler-deployment.yaml
   ```
-- Edit service account label to contain a valid MI name.
-- Apply Service account and verify that the WI label is added. Check the logs of the controller pod to debug.
-
----
-This project uses the Azure SDK for Go and Kubernetes client-go.
+3. Apply a test deployment for a app that is going to use workload identity.
+  ```bash
+  kubectl apply -f deploy/k8s/test-deployment.yaml
+  ```
+3. Edit service account annotation to contain a valid MI name (`deploy/k8s/test-sa.yaml`)
+4. Apply Service account and verify that the WI label is added.
+  ```bash
+  kubectl apply -f deploy/k8s/test-sa.yaml
+  ```
+5. Check the logs of the **Workload-identity-labeler**
+  ```bash
+  kubectl logs svc/workload-identity-labeler -f
+  ```
