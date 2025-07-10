@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  workload-identity-labeler:
+  - apiVersion: v2
+    appVersion: 0.0.1
+    created: "2025-07-10T11:27:25.034716382Z"
+    description: A controller that annotate ServiceAccounts with workload identity
+      client IDs
+    digest: 55b5cc159e2d36ff9fb801edbc03b45a812694dec149dcb0f36a2bc84cd1a824
+    name: workload-identity-labeler
+    urls:
+    - https://github.com/kristeey/workload-identity-labeler/releases/download/workload-identity-labeler-0.0.1/workload-identity-labeler-0.0.1.tgz
+    version: 0.0.1
+generated: "2025-07-10T11:27:25.034721892Z"
