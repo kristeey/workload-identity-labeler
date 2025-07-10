@@ -8,7 +8,6 @@ on:
       - main
     paths:
       - 'Dockerfile'
-      - '.github/workflows/publish.yaml'
       - '*.go'
       - 'go.mod'
       - 'go.sum'
