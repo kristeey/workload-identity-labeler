@@ -1,0 +1,6 @@
+---
+apiVersion: v2
+name: workload-identity-labeler
+version: 0.0.1
+description: A controller that annotate ServiceAccounts with workload identity client IDs
+appVersion: "0.0.1"

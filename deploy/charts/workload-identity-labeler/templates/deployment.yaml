@@ -1,0 +1,65 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "workload-identity-labeler.fullname" . }}
+  namespace: {{ include "workload-identity-labeler.namespace" . }}
+  labels:
+    {{ include "workload-identity-labeler.labels" . | nindent 4 }}
+    {{- with .Values.deployment.labels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.deployment.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "workload-identity-labeler.fullname" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{ include "workload-identity-labeler.labels" . | nindent 8 }}
+        {{- if eq .Values.azure.authMode "workload-identity" }}
+          azure.workload.identity/enabled: "true"
+        {{- end }}
+        {{- with .Values.pod.labels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.pod.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ template "workload-identity-labeler.serviceAccountName" . }}
+      containers:
+        - name: labeler
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: LOG_LEVEL
+              value: "{{ .Values.logLevel }}"
+            - name: SCAN_INTERVAL
+              value: "{{ .Values.scanInterval }}"
+            {{ with .Values.azure.subscriptionId }}
+            - name: AZURE_SUBSCRIPTION_ID
+              value: "{{ . }}"
+            {{ end }}
+            {{ with .Values.azure.tenantId }}
+            - name: AZURE_TENANT_ID
+              value: "{{ . }}"
+            {{ end }}
+            {{ with .Values.azure.clientId }}
+            - name: AZURE_CLIENT_ID
+              value: "{{ . }}"
+            {{ end }}
+            {{ with .Values.azure.clientSecret }}
+            - name: AZURE_CLIENT_SECRET
+              value: "{{ . }}"
+            {{ end }}
+            {{- with .Values.deployment.env }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}

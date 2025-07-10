@@ -1,0 +1,26 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "workload-identity-labeler.fullname" . }}-service-accounts
+  labels:
+    {{- include "workload-identity-labeler.labels" . | nindent 4  }}
+rules:
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list", "watch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "workload-identity-labeler.fullname" . }}-service-accounts
+  labels:
+    {{- include "workload-identity-labeler.labels" . | nindent 4  }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: workload-identity-labeler
+subjects:
+  - kind: ServiceAccount
+    name: workload-identity-labeler
+    namespace: {{ include "workload-identity-labeler.namespace" . }}
