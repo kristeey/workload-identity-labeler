@@ -6,7 +6,11 @@ on:
       - 'v*.*.*'
     branches:
       - main
-
+    paths:
+      - 'Dockerfile'
+      - '*.go'
+      - 'go.mod'
+      - 'go.sum'
 jobs:
   release:
     runs-on: ubuntu-latest
