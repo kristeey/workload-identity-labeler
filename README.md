@@ -84,7 +84,7 @@ helm install \
   --set azure.subscriptionId="<some-value>"
 ```
 Alternatively, installing in `service-principal` mode:
-```
+```bash
 helm install \
   workload-identity-labeler workload-identity-labeler/workload-identity-labeler \
   --set azure.authMode="service-principal" \
