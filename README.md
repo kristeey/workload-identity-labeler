@@ -25,20 +25,16 @@ OPTIONAL
 
 This controller is designed to work seamlessly with Azure Workload Identity for Kubernetes. Workload Identity allows Kubernetes workloads to access Azure resources securely without managing secrets. When using Workload Identity, ensure your ServiceAccounts are annotated and labeled according to the [Azure Workload Identity documentation](https://azure.github.io/azure-workload-identity/docs/).
 
-To utilize Azure workload identity as authentication method for the **Workload-identity-labeler Controller** do the following:
-1. Add `azure.workload.identity/use: "true"` pod annotation.
-2. Add `azure.workload.identity/client-id: "<client-id>"` kubernetes service account label.
+When installing with the helm chart, simply set the `azure.clientId` value to the client ID of the Azure Identity you want to use for authentication.
 
-### Azure client secret (not recommended for production)
-You can let **Workload-identity-labeler Controller** authenticate against Azure using Client secrets belonging to the Azure Client you want to use. Simply specify the `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET` environment variables.
-
-
-**Key points:**
-- The controller expects your Kubernetes ServiceAccounts to have the label `workload.identity.labeler/azure-mi-client-name` with the value set to the Azure Managed Identity name.
-- The controller will automatically add the `azure.workload.identity/client-id` label if it is missing.
-- For production, prefer Workload Identity over client secrets for improved security and manageability.
 
 For more details, see the [Azure Workload Identity documentation](https://azure.github.io/azure-workload-identity/docs/).
+
+### Azure client secret (not recommended for production)
+You can let **Workload-identity-labeler Controller** authenticate against Azure using Client secrets belonging to the Azure Client you want to use.
+
+When installing with the helm chart, populate the following values: `azure.authMode: "service-principal"`, `azure.clientId`, `azure.clientSecret`, `azure.tenantId`.
+
 
 ## Permissions
 ### Required Kubernetes Roles
@@ -107,7 +103,7 @@ helm install \
   --set azure.tenantID="<some-tenantID>
 ```
 
-## Example
+### Insalling using k8s manifests (example)
 1. Edit `deploy/k8s/deployment.yaml` to set your image and Azure credentials.
 2. Apply the **Workload-identity-labeler**:
   ```bash
