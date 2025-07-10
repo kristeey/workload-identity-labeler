@@ -9,8 +9,8 @@ global:
 logLevel: info  # Options: debug, info, warn, error
 scanInterval: 60s
 image:
-  repository: workload-identity-labeler
-  tag: latest
+  repository: ghcr.io/kristeey/workload-identity-labeler
+  tag: v0.0.1
   pullPolicy: IfNotPresent
 
 serviceAccount:
