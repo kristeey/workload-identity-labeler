@@ -4,13 +4,8 @@ on:
   push:
     tags:
       - 'v*.*.*'
-    branches:
-      - main
-    paths:
-      - 'Dockerfile'
-      - '*.go'
-      - 'go.mod'
-      - 'go.sum'
+      - 'v*.*.*-rc.*
+
 jobs:
   release:
     runs-on: ubuntu-latest
