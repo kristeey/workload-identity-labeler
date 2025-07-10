@@ -19,8 +19,8 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: workload-identity-labeler
+  name: {{ template "workload-identity-labeler.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: workload-identity-labeler
+    name: {{ template "workload-identity-labeler.serviceAccountName" . }}
     namespace: {{ include "workload-identity-labeler.namespace" . }}
