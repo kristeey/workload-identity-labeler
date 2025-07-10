@@ -8,7 +8,7 @@ on:
       - 'deploy/charts/**'
 
 jobs:
-  release:
+  release-helm:
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -25,6 +25,6 @@ jobs:
       - name: 🕊️ Run chart-releaser
         uses: helm/chart-releaser-action@v1.7.0
         with:
-          charts-dir: deploy/charts
+          charts_dir: deploy/charts
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
