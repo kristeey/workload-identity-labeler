@@ -71,7 +71,29 @@ docker buildx build --platform linux/amd64 -t workload-identity-labeler:latest .
 ```
 ## Installation
 ### Helm
-TBA
+Download repo
+```bash
+helm repo add workload-identity-labeler https://raw.githubusercontent.com/kristeey/workload-identity-labeler/gh-pages
+helm repo update
+```
+
+Installing in `workload-identity` authentication mode:
+```bash
+helm install \
+  workload-identity-labeler workload-identity-labeler/workload-identity-labeler \
+  --set azure.subscriptionId="<some-value>"
+```
+Alternatively, installing in `service-principal` mode:
+```
+helm install \
+  workload-identity-labeler workload-identity-labeler/workload-identity-labeler \
+  --set azure.authMode="service-principal" \
+  --set azure.subscriptionId="<some-subscriptionID>" \
+  --set azure.clientId="<some-clientID>" \
+  --set azure.clientSecret="<some-clientSecret>" \
+  --set azure.tenantID="<some-tenantID>
+```
+
 
 ## Example
 1. Edit `deploy/k8s/deployment.yaml` to set your image and Azure credentials.
