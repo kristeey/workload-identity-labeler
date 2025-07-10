@@ -2,10 +2,8 @@ name: Release Charts
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'deploy/charts/**'
+    tags:
+      - 'helm-v*.*.*'
 
 jobs:
   release-helm:
