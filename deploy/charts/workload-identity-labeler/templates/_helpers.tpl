@@ -24,9 +24,9 @@ Create the name of the service account to use
 */}}
 {{- define "workload-identity-labeler.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create -}}
-    {{ default (include "workload-identity-labeler.fullname" .) .Values.serviceAccount.name }}
+{{ default (include "workload-identity-labeler.fullname" .) .Values.serviceAccount.name }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+{{ default "workload-identity-labeler-sa" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
@@ -36,7 +36,7 @@ If not defined in values file then the helm release namespace is used
 By default this is not set so the helm release namespace will be used
 */}}
 {{- define "workload-identity-labeler.namespace" -}}
-    {{ .Values.namespace | default .Release.Namespace }}
+{{ .Values.namespace | default .Release.Namespace }}
 {{- end -}}
 
 
@@ -45,13 +45,13 @@ Labels to add to the workload-identity-labeler resources.
 These labels are added to all resources created by this chart.
 */}}
 {{- define "workload-identity-labeler.labels" -}}
-    app: {{ include "workload-identity-labeler.fullname" . }}
-    app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-    app.kubernetes.io/name: {{ include "workload-identity-labeler.fullname" . }}
-    app.kubernetes.io/instance: {{ .Release.Name | quote }}
-    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-    helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-    {{- with .Values.global.labels }}
-        {{- toYaml . | nindent 4 }}
-    {{- end }}
+app: {{ include "workload-identity-labeler.fullname" . }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/name: {{ include "workload-identity-labeler.fullname" . }}
+app.kubernetes.io/instance: {{ .Release.Name | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+{{- with .Values.global.labels }}
+{{- toYaml . | nindent 4 }}
+{{- end }}
 {{- end -}}

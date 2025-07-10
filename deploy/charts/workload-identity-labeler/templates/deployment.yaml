@@ -5,7 +5,7 @@ metadata:
   name: {{ template "workload-identity-labeler.fullname" . }}
   namespace: {{ include "workload-identity-labeler.namespace" . }}
   labels:
-    {{ include "workload-identity-labeler.labels" . | nindent 4 }}
+    {{- include "workload-identity-labeler.labels" . | nindent 4 }}
     {{- with .Values.deployment.labels }}
       {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -22,9 +22,9 @@ spec:
   template:
     metadata:
       labels:
-        {{ include "workload-identity-labeler.labels" . | nindent 8 }}
+        {{- include "workload-identity-labeler.labels" . | nindent 8 }}
         {{- if eq .Values.azure.authMode "workload-identity" }}
-          azure.workload.identity/enabled: "true"
+        azure.workload.identity/enabled: "true"
         {{- end }}
         {{- with .Values.pod.labels }}
           {{- toYaml . | nindent 8 }}
@@ -44,22 +44,31 @@ spec:
               value: "{{ .Values.logLevel }}"
             - name: SCAN_INTERVAL
               value: "{{ .Values.scanInterval }}"
-            {{ with .Values.azure.subscriptionId }}
+            {{- if not .Values.azure.subscriptionId }}
+            {{- fail "Error: .Values.azure.subscriptionId is required and cannot be empty" }}
+            {{- end }}
             - name: AZURE_SUBSCRIPTION_ID
-              value: "{{ . }}"
-            {{ end }}
-            {{ with .Values.azure.tenantId }}
+              value: "{{ .Values.azure.subscriptionId }}"
+            {{- if eq .Values.azure.authMode "service-principal" }}
+            {{- if not .Values.azure.clientId }}
+            {{- fail "Error: .Values.azure.tenantId is required and cannot be empty when using service-principal authMode" }}
+            {{- end }}
+            {{- with .Values.azure.tenantId }}
             - name: AZURE_TENANT_ID
               value: "{{ . }}"
-            {{ end }}
-            {{ with .Values.azure.clientId }}
+            {{- end }}
+            {{- if not .Values.azure.clientId }}
+            {{- fail "Error: .Values.azure.clientId is required and cannot be empty when using service-principal authMode" }}
+            {{- end }}
+            {{- with .Values.azure.clientId }}
             - name: AZURE_CLIENT_ID
               value: "{{ . }}"
-            {{ end }}
-            {{ with .Values.azure.clientSecret }}
+            {{- end }}
+            {{- with .Values.azure.clientSecret }}
             - name: AZURE_CLIENT_SECRET
               value: "{{ . }}"
-            {{ end }}
+            {{- end }}
+            {{- end }}
             {{- with .Values.deployment.env }}
-              {{- toYaml . | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}

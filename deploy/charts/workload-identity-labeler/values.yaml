@@ -1,9 +1,9 @@
 ---
-fullnameOverride: ""
-nameOverride: ""
+# fullnameOverride: ""
+# nameOverride: ""
 
 global:
-  labels: {}
+  labels:
 
 # Controller configuration
 logLevel: info  # Options: debug, info, warn, error
@@ -19,23 +19,24 @@ serviceAccount:
   # The name of the service account to use. If not set, the name will be derived from the chart name.
   name: ""
   # Annotations to add to the service account.
-  annotations: {}
+  annotations:
   # Labels to add to the service account.
-  labels: {}
+  labels:
 
 deployment:
   # Labels to add to the deployment.
-  labels: {}
+  labels:
   # Annotations to add to the deployment.
-  annotations: {}
+  annotations:
   # Additional environment variables to add to the deployment.
-  env: {}
+  env:
+    # - MY_ENV_VAR: "value"
 
 pod:
   # Labels to add to the pod.
-  labels: {}
+  labels:
   # Annotations to add to the pod.
-  annotations: {}
+  annotations:
 
 azure:
   # REQUIRED: Azure subscription ID where controller will look for ServiceAccounts.
@@ -52,7 +53,7 @@ azure:
 
   # REQUIRED: Azure client ID. This is the client ID of the Azure service principal or managed identity
   # that the controller will use to authenticate with Azure.
-  clientId: ""
+  clientId:
 
   # OPTIONAL: Azure client secret. Only required if `authMode` is set to
   # `service-principal`. Populates the `AZURE_CLIENT_SECRET` env var.
@@ -63,4 +64,4 @@ azure:
 
   # OPTIONAL: Azure tenant ID, used for authentication. Not needed if running on Azure Kubernetes Service (AKS),
   # as the AKS cluster will automatically use the tenant ID where the cluster is created.
-  tenantId: ""
+  tenantId:
